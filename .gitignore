@@ -16,6 +16,10 @@ ENV/
 pip-log.txt
 pip-delete-this-directory.txt
 
+# Machine Learning model weights (exclude from git, train on setup/build)
+backend/ml/*.pkl
+backend/ml/*.h5
+
 # Databases & local dynamic uploads
 *.db
 *.sqlite
