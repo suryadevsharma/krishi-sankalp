@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+    @apply bg-[#f9f6f0] text-slate-800 selection:bg-primary-light selection:text-white;
+  }
+}
+
+/* Custom premium styling classes */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(26, 92, 42, 0.08);
+}
+
+.gradient-green {
+  background: linear-gradient(135deg, #1a5c2a 0%, #103d1a 100%);
+}
+
+.gradient-amber {
+  background: linear-gradient(135deg, #d4870a 0%, #a36605 100%);
+}
+
+.gradient-premium {
+  background: linear-gradient(135deg, #1a5c2a 0%, #d4870a 100%);
+}
+
+/* Micro-animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Scrollbar tweaks */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1ebd9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c3b99f;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #1a5c2a;
+}
+
+/* Custom Leaflet Map Container tweaks */
+.leaflet-container {
+  font-family: 'Outfit', sans-serif !important;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px -2px rgba(26, 92, 42, 0.08);
+  border: 1px solid rgba(26, 92, 42, 0.12);
+  z-index: 10;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 8px !important;
+  box-shadow: 0 10px 25px -5px rgba(26, 92, 42, 0.1) !important;
+}
+
+.leaflet-popup-tip-container {
+  display: none !important;
+}

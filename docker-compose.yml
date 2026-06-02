@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgis/postgis:15-3.3
+    container_name: krishi_db
+    restart: always
+    environment:
+      POSTGRES_USER: krishi_user
+      POSTGRES_PASSWORD: krishi_password
+      POSTGRES_DB: krishi_sankalp
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U krishi_user -d krishi_sankalp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: krishi_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://krishi_user:krishi_password@db:5432/krishi_sankalp
+      - SECRET_KEY=supersecretjwtkeyforagriculturalplatformkrishisankalp
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=1440
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - APP_ENV=development
+      - TWILIO_ACCOUNT_SID=mock_sid
+      - TWILIO_AUTH_TOKEN=mock_token
+      - TWILIO_PHONE_NUMBER=mock_phone
+      - OPENWEATHERMAP_API_KEY=mock_weather_key
+      - UPLOAD_DIR=/app/uploads
+    volumes:
+      - ./backend:/app
+      - uploads_data:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    container_name: krishi_frontend
+    restart: always
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  uploads_data:
