@@ -13,7 +13,9 @@ Base.metadata.create_all(bind=engine)
 # Run production-safe seeding hook on startup (safe for Render Free Tier)
 try:
     from seeds.seed_prod import seed_production_users
+    from seeds.seed_prod_reference import seed_production_reference_data
     seed_production_users()
+    seed_production_reference_data()
 except Exception as e:
     print(f"Startup seeding check failed: {e}")
 
