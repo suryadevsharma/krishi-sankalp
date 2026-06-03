@@ -137,11 +137,20 @@ def verify_otp(verify_in: schemas.OTPVerify, db: Session = Depends(get_db)):
 
 @router.post("/forgot-password")
 def forgot_password(forgot_in: schemas.ForgotPasswordRequest, db: Session = Depends(get_db)):
-    clean_email = forgot_in.email.strip().lower()
-    
-    user = db.query(models.User).filter(models.User.email == clean_email).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User with this email address not found.")
+    user = None
+    if forgot_in.email:
+        clean_email = forgot_in.email.strip().lower()
+        user = db.query(models.User).filter(models.User.email == clean_email).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User with this email address not found.")
+    elif forgot_in.phone:
+        clean_phone = forgot_in.phone.strip()
+        user = db.query(models.User).filter(models.User.phone == clean_phone).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User with this phone number not found.")
+        clean_email = user.email
+    else:
+        raise HTTPException(status_code=400, detail="Either email or phone is required.")
     
     otp_code = str(random.randint(100000, 999999))
     user.otp_code = otp_code

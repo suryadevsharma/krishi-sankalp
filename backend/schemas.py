@@ -274,7 +274,8 @@ class OTPVerify(BaseModel):
     otp_code: str
 
 class ForgotPasswordRequest(BaseModel):
-    email: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
 
 class ResetPasswordRequest(BaseModel):
     email: str

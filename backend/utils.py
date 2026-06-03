@@ -104,6 +104,42 @@ def send_otp_email(to_email: str, otp_code: str, is_reset: bool = False):
     subject = "Krishi Sankalp - Password Reset OTP" if is_reset else "Krishi Sankalp - Account Verification OTP"
     body = f"Your Krishi Sankalp OTP is: {otp_code}. It is valid for 10 minutes."
 
+    # Send using HTTP-based Resend API if API Key is configured (suitable for Render Free Tier)
+    resend_api_key = os.getenv("RESEND_API_KEY", "")
+    if resend_api_key:
+        resend_from = os.getenv("RESEND_FROM", "onboarding@resend.dev")
+        try:
+            import httpx
+            if app_env == "development":
+                print("\n" + "="*50)
+                print(f" RESEND API LOG (DEV MODE)")
+                print(f" To Email: {to_email}")
+                print(f" OTP Code: {otp_code}")
+                print(f" Purpose: {'Password Reset' if is_reset else 'Account Verification'}")
+                print("="*50 + "\n")
+            
+            response = httpx.post(
+                "https://api.resend.com/emails",
+                headers={
+                    "Authorization": f"Bearer {resend_api_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "from": resend_from,
+                    "to": [to_email],
+                    "subject": subject,
+                    "text": body
+                },
+                timeout=10.0
+            )
+            if response.status_code in (200, 201, 202):
+                print(f"[RESEND SUCCESS] Email OTP successfully sent to {to_email} via Resend API.")
+                return
+            else:
+                print(f"[RESEND ERROR] Failed to send email via Resend API: Status {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            print(f"[RESEND EXCEPTION] Error calling Resend API: {e}")
+
     # Log only in development/testing mode
     if app_env == "development":
         print("\n" + "="*50)
