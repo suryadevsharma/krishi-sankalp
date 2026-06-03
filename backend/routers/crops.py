@@ -2,6 +2,7 @@ import os
 import pickle
 import datetime
 import httpx
+import numpy as np
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from typing import Optional, List
