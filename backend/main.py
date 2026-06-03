@@ -10,6 +10,13 @@ from routers import auth, soil, crops, disease, market, budget, schemes, admin
 # Auto create tables on startup
 Base.metadata.create_all(bind=engine)
 
+# Run production-safe seeding hook on startup (safe for Render Free Tier)
+try:
+    from seeds.seed_prod import seed_production_users
+    seed_production_users()
+except Exception as e:
+    print(f"Startup seeding check failed: {e}")
+
 app = FastAPI(
     title="Krishi Sankalp API",
     description="Full-stack AI-powered agricultural platform backend supporting Indian farmers.",
