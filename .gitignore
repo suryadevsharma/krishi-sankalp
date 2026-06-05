@@ -62,3 +62,7 @@ pnpm-debug.log*
 
 # Docker / System configuration overrides
 docker-compose.override.yml
+
+# Private Project Bible Document
+PROJECT_BIBLE.md
+
