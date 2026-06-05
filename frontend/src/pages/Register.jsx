@@ -349,7 +349,7 @@ export default function Register() {
               disabled={loading}
               className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-primary hover:bg-primary-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors disabled:opacity-50"
             >
-              {loading ? "Registering..." : t('auth.registerBtn')}
+              {loading ? "Registering..." : "Register"}
             </button>
           </div>
         </form>
