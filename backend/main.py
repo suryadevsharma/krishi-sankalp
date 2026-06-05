@@ -29,6 +29,24 @@ try:
 except Exception as e:
     print(f"Database migration (add farmer_code column) skipped or failed: {e}", flush=True)
 
+# One-time database cleanup migration (deletes non-demo users, updates demo users, keeps other data untouched)
+try:
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        print("Database cleanup: Deleting non-demo users and updating demo user farmer_codes...", flush=True)
+        conn.execute(text("DELETE FROM price_alerts WHERE farmer_id IN (SELECT id FROM users WHERE phone NOT IN ('9999999999', '8888888888', '7777777777'));"))
+        conn.execute(text("DELETE FROM disease_detections WHERE farmer_id IN (SELECT id FROM users WHERE phone NOT IN ('9999999999', '8888888888', '7777777777'));"))
+        conn.execute(text("DELETE FROM crop_calendar_events WHERE crop_cycle_id IN (SELECT id FROM crop_cycles WHERE farmer_id IN (SELECT id FROM users WHERE phone NOT IN ('9999999999', '8888888888', '7777777777')));"))
+        conn.execute(text("DELETE FROM budget_entries WHERE crop_cycle_id IN (SELECT id FROM crop_cycles WHERE farmer_id IN (SELECT id FROM users WHERE phone NOT IN ('9999999999', '8888888888', '7777777777')));"))
+        conn.execute(text("DELETE FROM crop_cycles WHERE farmer_id IN (SELECT id FROM users WHERE phone NOT IN ('9999999999', '8888888888', '7777777777'));"))
+        conn.execute(text("DELETE FROM soil_reports WHERE farmer_id IN (SELECT id FROM users WHERE phone NOT IN ('9999999999', '8888888888', '7777777777')) OR lab_id IN (SELECT id FROM users WHERE phone NOT IN ('9999999999', '8888888888', '7777777777'));"))
+        conn.execute(text("DELETE FROM users WHERE phone NOT IN ('9999999999', '8888888888', '7777777777');"))
+        conn.execute(text("UPDATE users SET farmer_code = '1234' WHERE phone IN ('9999999999', '8888888888', '7777777777');"))
+        conn.commit()
+        print("Database cleanup: Finished successfully!", flush=True)
+except Exception as e:
+    print(f"Database cleanup migration failed: {e}", flush=True)
+
 # Run production-safe seeding hook on startup (safe for Render Free Tier)
 try:
     from seeds.seed_prod import seed_production_users
