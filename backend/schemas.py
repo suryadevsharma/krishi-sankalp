@@ -14,6 +14,7 @@ class UserCreate(BaseModel):
     language_pref: str = "en"
     role: str = "farmer"
     password: str
+    farmer_code: str
 
 class UserLogin(BaseModel):
     phone: str
@@ -277,8 +278,12 @@ class ForgotPasswordRequest(BaseModel):
     email: Optional[str] = None
     phone: Optional[str] = None
 
+class VerifyRecoveryRequest(BaseModel):
+    phone: str
+    farmer_code: str
+
 class ResetPasswordRequest(BaseModel):
-    email: str
-    otp_code: str
+    phone: str
+    farmer_code: str
     new_password: str
 

@@ -21,6 +21,14 @@ def register(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     clean_phone = user_in.phone.strip()
     clean_email = user_in.email.strip().lower()
     clean_password = user_in.password.strip()
+    clean_farmer_code = user_in.farmer_code.strip()
+    
+    # Validate farmer code is exactly 4 digits, numbers only
+    if not re.match(r"^\d{4}$", clean_farmer_code):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Farmer Code must be exactly 4 digits"
+        )
     
     # Validate email format
     if not EMAIL_REGEX.match(clean_email):
@@ -47,8 +55,6 @@ def register(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     
     # Hash password and create user
     hashed_password = utils.get_password_hash(clean_password)
-    otp_code = str(random.randint(100000, 999999))
-    otp_expires_at = datetime.utcnow() + timedelta(minutes=10)
     
     user = models.User(
         phone=clean_phone,
@@ -61,13 +67,9 @@ def register(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
         language_pref=user_in.language_pref,
         role=user_in.role,
         hashed_password=hashed_password,
-        otp_code=otp_code,
-        otp_expires_at=otp_expires_at,
-        is_verified=False
+        farmer_code=clean_farmer_code,
+        is_verified=True  # Instant auto-verification
     )
-    
-    # Send email OTP
-    utils.send_otp_email(clean_email, otp_code, is_reset=False)
     
     db.add(user)
     db.commit()
@@ -161,27 +163,42 @@ def forgot_password(forgot_in: schemas.ForgotPasswordRequest, db: Session = Depe
     utils.send_otp_email(clean_email, otp_code, is_reset=True)
     return {"status": "success", "message": "Reset OTP sent successfully."}
 
+@router.post("/verify-recovery")
+def verify_recovery(verify_in: schemas.VerifyRecoveryRequest, db: Session = Depends(get_db)):
+    clean_phone = verify_in.phone.strip()
+    clean_code = verify_in.farmer_code.strip()
+    
+    user = db.query(models.User).filter(
+        models.User.phone == clean_phone,
+        models.User.farmer_code == clean_code
+    ).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No user found with the provided Phone Number and Farmer Code."
+        )
+    return {"status": "success", "message": "Identity verified successfully."}
+
 @router.post("/reset-password")
 def reset_password(reset_in: schemas.ResetPasswordRequest, db: Session = Depends(get_db)):
-    clean_email = reset_in.email.strip().lower()
-    clean_otp = reset_in.otp_code.strip()
+    clean_phone = reset_in.phone.strip()
+    clean_code = reset_in.farmer_code.strip()
     clean_new_password = reset_in.new_password.strip()
     
-    user = db.query(models.User).filter(models.User.email == clean_email).first()
+    user = db.query(models.User).filter(
+        models.User.phone == clean_phone,
+        models.User.farmer_code == clean_code
+    ).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-        
-    # Check expiration
-    if user.otp_expires_at and datetime.utcnow() > user.otp_expires_at:
-        raise HTTPException(status_code=400, detail="Reset OTP has expired. Please request a new password reset.")
-        
-    if user.otp_code != clean_otp or not user.otp_code:
-        raise HTTPException(status_code=400, detail="Invalid or expired reset OTP code.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invalid Phone Number or Farmer Code."
+        )
     
     user.hashed_password = utils.get_password_hash(clean_new_password)
     user.otp_code = None
     user.otp_expires_at = None
-    user.is_verified = True  # Auto-verify if somehow unverified
+    user.is_verified = True
     db.commit()
     return {"status": "success", "message": "Password reset successfully. Please login."}
 

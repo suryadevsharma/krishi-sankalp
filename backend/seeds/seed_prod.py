@@ -29,6 +29,7 @@ def seed_production_users():
                 language_pref="hi",
                 role="farmer",
                 hashed_password=get_password_hash("demo123"),
+                farmer_code="1234",
                 is_verified=True,
                 otp_code=None,
                 otp_expires_at=None,
@@ -36,7 +37,9 @@ def seed_production_users():
             )
             db.add(demo_farmer)
         else:
-            print("User Ramesh Kumar (9999999999) already exists. Skipping.")
+            print("User Ramesh Kumar (9999999999) already exists. Enforcing farmer_code=1234.")
+            farmer.farmer_code = "1234"
+            farmer.is_verified = True
 
         # 2. Lab tech account
         lab_tech = db.query(User).filter(User.phone == "8888888888").first()
@@ -53,6 +56,7 @@ def seed_production_users():
                 language_pref="en",
                 role="lab",
                 hashed_password=get_password_hash("demo123"),
+                farmer_code="1234",
                 is_verified=True,
                 otp_code=None,
                 otp_expires_at=None,
@@ -60,7 +64,9 @@ def seed_production_users():
             )
             db.add(demo_lab)
         else:
-            print("User Dr. Shashi Shekhar (8888888888) already exists. Skipping.")
+            print("User Dr. Shashi Shekhar (8888888888) already exists. Enforcing farmer_code=1234.")
+            lab_tech.farmer_code = "1234"
+            lab_tech.is_verified = True
 
         # 3. FPO manager account
         fpo_mgr = db.query(User).filter(User.phone == "7777777777").first()
@@ -77,6 +83,7 @@ def seed_production_users():
                 language_pref="en",
                 role="fpo",
                 hashed_password=get_password_hash("demo123"),
+                farmer_code="1234",
                 is_verified=True,
                 otp_code=None,
                 otp_expires_at=None,
@@ -84,7 +91,9 @@ def seed_production_users():
             )
             db.add(demo_fpo)
         else:
-            print("User Sanjay Patil (7777777777) already exists. Skipping.")
+            print("User Sanjay Patil (7777777777) already exists. Enforcing farmer_code=1234.")
+            fpo_mgr.farmer_code = "1234"
+            fpo_mgr.is_verified = True
 
         db.commit()
         print("Production-safe seeding completed successfully!")

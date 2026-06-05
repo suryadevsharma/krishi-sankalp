@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { KeyRound, Mail, Lock, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { KeyRound, Lock, Eye, EyeOff, Phone, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 
@@ -9,27 +9,34 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 export default function ForgotPassword() {
   const navigate = useNavigate();
 
-  const [step, setStep] = useState(1); // 1 = Request OTP, 2 = Reset Password
-  const [email, setEmail] = useState('');
-  const [otpCode, setOtpCode] = useState('');
+  const [step, setStep] = useState(1); // 1 = Verify Credentials, 2 = Reset Password
+  const [phone, setPhone] = useState('');
+  const [farmerCode, setFarmerCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleRequestOtp = async (e) => {
+  const handleVerifyRecovery = async (e) => {
     e.preventDefault();
-    if (!email) {
-      toast.error("Please enter your email address.");
+    if (!phone || !farmerCode) {
+      toast.error("Please enter both Phone Number and Farmer Code.");
+      return;
+    }
+    if (!/^\d{4}$/.test(farmerCode.trim())) {
+      toast.error("Farmer Code must be exactly 4 digits.");
       return;
     }
 
     setLoading(true);
     try {
-      await axios.post(`${API_URL}/api/auth/forgot-password`, { email: email.trim() });
-      toast.success("Simulated reset OTP code printed to backend console log or email sent!");
+      await axios.post(`${API_URL}/api/auth/verify-recovery`, {
+        phone: phone.trim(),
+        farmer_code: farmerCode.trim()
+      });
+      toast.success("Identity verified! Please enter your new password.");
       setStep(2);
     } catch (err) {
-      const errorMsg = err.response?.data?.detail || "Email address not found.";
+      const errorMsg = err.response?.data?.detail || "Invalid Phone Number or Farmer Code.";
       toast.error(errorMsg);
     } finally {
       setLoading(false);
@@ -38,26 +45,22 @@ export default function ForgotPassword() {
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
-    if (!email || !otpCode || !newPassword) {
+    if (!phone || !farmerCode || !newPassword) {
       toast.error("Please fill in all fields.");
-      return;
-    }
-    if (otpCode.length !== 6) {
-      toast.error("OTP must be 6 digits.");
       return;
     }
 
     setLoading(true);
     try {
       const res = await axios.post(`${API_URL}/api/auth/reset-password`, {
-        email: email.trim(),
-        otp_code: otpCode.trim(),
+        phone: phone.trim(),
+        farmer_code: farmerCode.trim(),
         new_password: newPassword.trim()
       });
       toast.success(res.data.message || "Password updated successfully!");
       navigate('/login');
     } catch (err) {
-      const errorMsg = err.response?.data?.detail || "Failed to reset password. Check OTP code.";
+      const errorMsg = err.response?.data?.detail || "Failed to reset password. Please check your inputs.";
       toast.error(errorMsg);
     } finally {
       setLoading(false);
@@ -79,30 +82,54 @@ export default function ForgotPassword() {
           </h2>
           <p className="mt-2 text-sm text-slate-500 font-medium">
             {step === 1 
-              ? "Enter your email address to receive a simulated reset OTP code." 
-              : "Check your email or server log and input the OTP along with your new password."}
+              ? "Verify your identity using your phone number and 4-digit farmer code." 
+              : "Enter a new secure password for your account."}
           </p>
         </div>
 
         {step === 1 ? (
-          /* Step 1: Request OTP Form */
-          <form className="mt-8 space-y-6" onSubmit={handleRequestOtp}>
-            <div>
-              <label className="text-sm font-semibold text-slate-700 block mb-1">
-                Email Address
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-slate-400" />
+          /* Step 1: Verify Credentials */
+          <form className="mt-8 space-y-6" onSubmit={handleVerifyRecovery}>
+            <div className="space-y-4">
+              {/* Phone Number */}
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Phone Number *
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Phone className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="Enter registered phone number"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="pl-10 block w-full px-3 py-2.5 border border-slate-300 rounded-lg text-slate-950 placeholder-slate-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm font-semibold"
+                  />
                 </div>
-                <input
-                  type="email"
-                  required
-                  placeholder="e.g. ramesh@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 block w-full px-3 py-2.5 border border-slate-300 rounded-lg text-slate-950 placeholder-slate-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm font-semibold"
-                />
+              </div>
+
+              {/* Farmer Code */}
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Farmer Code / किसान कोड *
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <ShieldCheck className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    maxLength={4}
+                    placeholder="Enter 4-digit code"
+                    value={farmerCode}
+                    onChange={(e) => setFarmerCode(e.target.value.replace(/\D/g, ''))}
+                    className="pl-10 block w-full px-3 py-2.5 border border-slate-300 rounded-lg text-slate-950 placeholder-slate-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm font-semibold tracking-wider"
+                  />
+                </div>
               </div>
             </div>
 
@@ -112,52 +139,31 @@ export default function ForgotPassword() {
                 disabled={loading}
                 className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-primary hover:bg-primary-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors disabled:opacity-50"
               >
-                {loading ? "Sending..." : "Request Reset OTP"}
+                {loading ? "Verifying..." : "Verify Identity"}
               </button>
             </div>
           </form>
         ) : (
-          /* Step 2: Reset Password Form */
+          /* Step 2: Enter New Password Form */
           <form className="mt-8 space-y-6" onSubmit={handleResetPassword}>
             <div className="space-y-4">
-              {/* Email prefilled */}
+              {/* Phone prefilled */}
               <div>
-                <label className="text-sm font-semibold text-slate-700 block mb-1">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    type="email"
-                    disabled
-                    value={email}
-                    className="pl-10 block w-full px-3 py-2.5 border border-slate-200 bg-slate-50 rounded-lg text-slate-400 sm:text-sm font-semibold cursor-not-allowed"
-                  />
-                </div>
-              </div>
-
-              {/* OTP */}
-              <div>
-                <label className="text-sm font-semibold text-slate-700 block mb-1">
-                  6-Digit OTP Code
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Phone Number
                 </label>
                 <input
                   type="text"
-                  required
-                  maxLength={6}
-                  placeholder="Enter 6-digit code"
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                  className="block w-full px-3 py-2.5 border border-slate-300 rounded-lg text-slate-950 placeholder-slate-400 tracking-[0.4em] text-center focus:outline-none focus:ring-primary focus:border-primary text-lg font-bold"
+                  disabled
+                  value={phone}
+                  className="block w-full px-3 py-2.5 border border-slate-200 bg-slate-50 rounded-lg text-slate-400 sm:text-sm font-semibold cursor-not-allowed"
                 />
               </div>
 
               {/* New Password */}
               <div>
-                <label className="text-sm font-semibold text-slate-700 block mb-1">
-                  New Password
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  New Password *
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -196,7 +202,7 @@ export default function ForgotPassword() {
                 onClick={() => setStep(1)}
                 className="w-full text-center text-xs font-semibold text-slate-400 hover:text-slate-600 hover:underline"
               >
-                Go Back to Step 1
+                Go Back
               </button>
             </div>
           </form>

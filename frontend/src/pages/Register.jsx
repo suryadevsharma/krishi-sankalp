@@ -16,6 +16,7 @@ export default function Register() {
     name: '',
     phone: '',
     email: '',
+    farmer_code: '',
     village: '',
     district: '',
     state: '',
@@ -40,8 +41,13 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name || !form.phone || !form.email || !form.password || !form.village || !form.district || !form.state || !form.land_acres) {
+    if (!form.name || !form.phone || !form.email || !form.farmer_code || !form.password || !form.village || !form.district || !form.state || !form.land_acres) {
       toast.error("Please fill in all mandatory fields.");
+      return;
+    }
+
+    if (!/^\d{4}$/.test(form.farmer_code.trim())) {
+      toast.error("Farmer Code must be exactly 4 digits.");
       return;
     }
 
@@ -51,6 +57,7 @@ export default function Register() {
         name: form.name.trim(),
         phone: form.phone.trim(),
         email: form.email.trim(),
+        farmer_code: form.farmer_code.trim(),
         village: form.village.trim(),
         district: form.district.trim(),
         state: form.state.trim(),
@@ -64,9 +71,8 @@ export default function Register() {
       localStorage.setItem('farmer_lat', lat.toString());
       localStorage.setItem('farmer_lon', lon.toString());
 
-      toast.success(t('auth.otpSent'));
-      toast.success("Registration successful! Check developer logs or your email for OTP.");
-      navigate(`/verify-otp?phone=${form.phone}`);
+      toast.success("Registration successful! Please login.");
+      navigate(`/login`);
     } catch (err) {
       const errorMsg = err.response?.data?.detail || "Registration failed. Try again.";
       toast.error(errorMsg);
@@ -153,6 +159,34 @@ export default function Register() {
                   className="pl-10 block w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-950 placeholder-slate-400 focus:outline-none focus:ring-primary focus:border-primary text-sm"
                 />
               </div>
+            </div>
+
+            {/* Farmer Code */}
+            <div>
+              <label className="text-xs font-bold text-slate-700 block mb-1">
+                Farmer Code / किसान कोड *
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-4 w-4 text-slate-400" />
+                </div>
+                <input
+                  name="farmer_code"
+                  type="text"
+                  maxLength={4}
+                  required
+                  placeholder="Create a 4-digit Farmer Code"
+                  value={form.farmer_code}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    setForm(prev => ({ ...prev, farmer_code: val }));
+                  }}
+                  className="pl-10 block w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-950 placeholder-slate-400 focus:outline-none focus:ring-primary focus:border-primary text-sm font-semibold"
+                />
+              </div>
+              <p className="text-[10px] text-slate-400 mt-1 font-semibold">
+                Remember this code — used for password recovery
+              </p>
             </div>
 
             {/* Village */}

@@ -20,6 +20,7 @@ class User(Base):
     otp_code = Column(String, nullable=True)
     otp_expires_at = Column(DateTime, nullable=True)
     email = Column(String, unique=True, index=True, nullable=True)
+    farmer_code = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
 
     soil_reports = relationship("SoilReport", back_populates="farmer", foreign_keys="[SoilReport.farmer_id]")
