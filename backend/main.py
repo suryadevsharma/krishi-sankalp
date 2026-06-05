@@ -10,6 +10,25 @@ from routers import auth, soil, crops, disease, market, budget, schemes, admin
 # Auto create tables on startup
 Base.metadata.create_all(bind=engine)
 
+# Run migration to add farmer_code column if not exists
+try:
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        dialect_name = conn.dialect.name
+        if dialect_name == "postgresql":
+            conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS farmer_code VARCHAR;"))
+            conn.commit()
+            print("Database migration: Checked/added farmer_code column in PostgreSQL users table.", flush=True)
+        elif dialect_name == "sqlite":
+            res = conn.execute(text("PRAGMA table_info(users);")).fetchall()
+            columns = [row[1] for row in res]
+            if "farmer_code" not in columns:
+                conn.execute(text("ALTER TABLE users ADD COLUMN farmer_code VARCHAR;"))
+                conn.commit()
+                print("Database migration: Added farmer_code column to SQLite users table.", flush=True)
+except Exception as e:
+    print(f"Database migration (add farmer_code column) skipped or failed: {e}", flush=True)
+
 # Run production-safe seeding hook on startup (safe for Render Free Tier)
 try:
     from seeds.seed_prod import seed_production_users
